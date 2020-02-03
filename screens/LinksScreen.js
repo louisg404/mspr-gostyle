@@ -15,12 +15,10 @@ export default function LinksScreen() {
     fetch(`http://192.168.43.242:8080/coupon/` + data)
       .then((response) => response.json())
       .then((responseJson) => {
-        var code = responseJson.code;
-        var description = responseJson.description;
+        var coupon = responseJson;
 
         // Appel fonctions de stockage téléphone
-        _retrieveData();
-        _storeData(code, description);
+        _storeData(coupon);
 
       })
       .catch((error) => {
@@ -30,34 +28,30 @@ export default function LinksScreen() {
   }
 
   // Store data in device storage
-  _storeData = async (code, description) => {
+  _storeData = async (coupon) => {
     try {
       // On sauvegarde la valeur du code
-      await AsyncStorage.setItem('code', code);
-      // On sauvegarde la valeur de la description
-      await AsyncStorage.setItem('description', description);
+      await AsyncStorage.setItem(coupon.id.toString(), JSON.stringify(coupon));
 
     } catch (error) {
       // Error saving data
-      console.log("Data non sauvegardée");
+      console.log("Data non sauvegardée", error);
     }
   }
 
   // Get data from device storage
-  _retrieveData = async () => {
-    try {
-      var value = await AsyncStorage.getItem('code');
-      var value2 = await AsyncStorage.getItem('description');
+  // _retrieveData = async () => {
+  //   try {
+  //     const keys = await AsyncStorage.getAllKeys();
+  //     const result = await AsyncStorage.multiGet(keys);
+
+  //     return result.map(req => JSON.parse(req)).forEach(console.log);
       
-      if (value !== null && value2 !== null) {
-          // Our data is fetched successfully
-          console.log("Valeur sauvegardée dans le storage : " + value + " et " + value2);
-      }
-    } catch (error) {
-      // Error retrieving data
-      console.log("Data non récupérée");
-    }
-  }
+  //   } catch (error) {
+  //     // Error retrieving data
+  //     console.log("Data non récupérée", error);
+  //   }
+  // }
 
   useEffect(() => {
     (async () => {

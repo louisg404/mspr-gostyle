@@ -7,8 +7,10 @@ import {
   View,
   ActivityIndicator,
   AsyncStorage,
-  TouchableOpacity
+  TouchableOpacity,
+  Button
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 class HomeScreen extends React.Component {
   // Constructeur
@@ -20,6 +22,7 @@ class HomeScreen extends React.Component {
       value: '',
       value2: '',
       modalVisible: false,
+      listCoupons: []
     };
   }
 
@@ -29,16 +32,19 @@ class HomeScreen extends React.Component {
   }
 
   componentDidMount () {
-    // Récupérer le code du LocalStorage
-    AsyncStorage.getItem('code')
-      .then((code) => {
-        this.setState({value: code});
-      });
-    // Récupérer la description du LocalStorage
-    AsyncStorage.getItem('description')
-    .then((description) => {
-      this.setState({value2: description});
-    });
+    try {
+      AsyncStorage.getAllKeys().then((keys) => {
+        AsyncStorage.multiGet(keys).then((result) => {
+          var listCoupons = result.map(req => console.log(req));
+          this.setState({listCoupons});
+          console.log(this.state.listCoupons);
+        })
+      })
+      
+    } catch (error) {
+      // Error retrieving data
+      console.log("Data non récupérée", error);
+    }
 
     return fetch('http://192.168.43.242:8080/coupon')
       .then ( (response) => response.json() )
@@ -93,10 +99,16 @@ class HomeScreen extends React.Component {
 
             <View style={styles.getStartedContainer}>
 
+              
               <Text style={styles.getTitleText}>Mes coupons</Text>
               {movies}
 
-              <Text style={styles.getTitleText}>Sauvegardés</Text>
+              <Text style={styles.getTitleText}>
+                <Ionicons
+                  name={'md-heart'}
+                  size={40}
+                  color={'#ED4956'}
+                /> Sauvegardés</Text>
 
               <View style={{flex:1,backgroundColor:"#fff"}}>
                 <View style={{backgroundColor:"#3E87E3", paddingHorizontal: 15, paddingVertical: 5, borderRadius: 10, marginBottom: 10, shadowColor: "#000",
@@ -108,15 +120,15 @@ class HomeScreen extends React.Component {
                   shadowRadius: 3.84,
 
                   elevation: 5,}}>
-                  <Text style={styles.getItemText}>{this.state.value}</Text>
-                  <Text style={styles.getDescriptionText}>{this.state.value2}</Text>
+
+                  <Text style={styles.getItemText}>{this.state.listCoupons.code}</Text>
+                  <Text style={styles.getDescriptionText}>{this.state.listCoupons.description}</Text>
                 </View>
               </View>
               
               <TouchableOpacity style={styles.buttonStyle}>
                 <Text style={styles.buttonStyleText}>Actualiser</Text>
-              </TouchableOpacity>
-              
+              </TouchableOpacity>              
             </View>
           </ScrollView>
         </View>

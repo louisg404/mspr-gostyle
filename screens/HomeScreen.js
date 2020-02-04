@@ -7,9 +7,12 @@ import {
   View,
   AsyncStorage,
   TouchableOpacity,
-  RefreshControl
+  RefreshControl,
+  Modal,
+  TouchableHighlight
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import QRCode from 'react-qr-code';
 
 class HomeScreen extends React.Component {
   // Constructeur
@@ -17,7 +20,8 @@ class HomeScreen extends React.Component {
     super(props);
     this.state = {
       listCoupons: [],
-      refreshing: false
+      refreshing: false,
+      modalVisible: false,
     };
   }
 
@@ -53,6 +57,11 @@ class HomeScreen extends React.Component {
     this.setState({refreshing: false});
   }
 
+  // Etat de la modal
+  setModalVisible(visible) {
+    this.setState({modalVisible: visible});
+  }
+
   render(){
     // View du GET AsyncStorage (tous les coupons sauvegardés)
     let coupons = this.state.listCoupons.map((val, key) => {
@@ -68,7 +77,9 @@ class HomeScreen extends React.Component {
                     <Text style={styles.getItemText}>
                     {obj.code}</Text>
                     <Text style={styles.getDescriptionText}>{obj.description}</Text>
-                    <Text style={styles.getDescriptionText}>ID scanné : {val[0]}</Text>
+                    <View style={styles.qrCode}>
+                      <QRCode size={100} bgColor={'#3E87E3'} fgColor={'white'} value={val[0]} />
+                    </View>
                   </View>
                 </View>
     });
@@ -133,6 +144,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5
   },
+  qrCode: {
+    marginBottom: 10,
+    flex: 1,
+    alignItems: 'center'
+  },
   welcomeImage: {
     width: 250,
     height: 500,
@@ -157,9 +173,21 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginHorizontal: 50
   },
+  littleButtonStyle: {
+    padding: 10,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    marginBottom: 10
+  },
   buttonStyleText: {
     color: 'white',
     fontSize: 20,
+    fontWeight: 'bold',
+  },
+  littleButtonStyleText: {
+    color: 'black',
+    fontSize: 15,
     fontWeight: 'bold',
   },
   codeHighlightContainer: {

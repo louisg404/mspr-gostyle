@@ -9,7 +9,8 @@ import {
   AsyncStorage,
   TouchableOpacity,
   Button,
-  RefreshControl
+  RefreshControl,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -20,7 +21,9 @@ class AdminScreen extends React.Component {
     this.state = {
       isLoading: true,
       dataSource: null,
-      refreshing: false
+      refreshing: false,
+      email:"",
+      password:"",
     };
   }
 
@@ -87,7 +90,6 @@ class AdminScreen extends React.Component {
               <Text style={styles.getTitleText}>Tous les coupons</Text>
               {movies}             
             </View>
-
           </ScrollView>
         </View>
       );
@@ -107,6 +109,29 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingTop: 30,
   },
+  // Espace de connexion
+  inputView: {
+    backgroundColor: "grey",
+    borderRadius: 10,
+    marginBottom: 5,
+    justifyContent: "center",
+    padding: 20,
+    marginHorizontal: 25
+  },
+  inputText:{
+    color: "white"
+  },
+  loginBtn:{
+    marginHorizontal: 25,
+    backgroundColor: "#fb5b5a",
+    borderRadius: 25,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 40,
+    marginBottom: 10
+  },
+  // Fin espace de connexion
   cards: {
     backgroundColor:"#3E87E3",
     paddingHorizontal: 15,

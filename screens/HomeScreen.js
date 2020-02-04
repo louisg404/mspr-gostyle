@@ -5,10 +5,9 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
   AsyncStorage,
   TouchableOpacity,
-  Button
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,27 +16,23 @@ class HomeScreen extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      isLoading: true,
-      dataSource: null,
-      value: '',
-      value2: '',
-      modalVisible: false,
-      listCoupons: []
+      listCoupons: [],
+      refreshing: false
     };
   }
 
-  // Changer l'état d'une modal
-  setModalVisible(visible) {
-    this.setState({modalVisible: visible});
+  componentDidMount () {
+    // Récupérer les données au démarrage
+    this.getData();
   }
 
-  componentDidMount () {
+  // Récupérer tous les coupons de l'AsyncStorage
+  getData() {
     try {
       AsyncStorage.getAllKeys().then((keys) => {
         AsyncStorage.multiGet(keys).then((result) => {
-          var listCoupons = result.map(req => console.log(req));
+          var listCoupons = result.map(req => req);
           this.setState({listCoupons});
-          console.log(this.state.listCoupons);
         })
       })
       
@@ -45,95 +40,64 @@ class HomeScreen extends React.Component {
       // Error retrieving data
       console.log("Data non récupérée", error);
     }
+  }
 
-    return fetch('http://192.168.43.242:8080/coupon')
-      .then ( (response) => response.json() )
-      .then( (responseJson) => {
-        this.setState({
-          isLoading: false,
-          dataSource: responseJson
-        });
-      })
+  // Supprimer toutes les données de l'AsyncStorage
+  clearAllData() {
+    AsyncStorage.clear();
+  }
 
-      .catch((error) => {
-        console.log(error)
-      });
+  // Rafraichir la vue de l'AsyncStorage
+  _onRefresh() {
+    this.getData();
+    this.setState({refreshing: false});
   }
 
   render(){
-    // Données en cours de récupération
-    if (this.state.isLoading){
-      return(
-        <View style={styles.container}>
-          <ActivityIndicator />
-        </View>
-      )
-    // Données de l'API récupérées
-    }else{
-      let movies = this.state.dataSource.map((val, key) => {
-          return  <View key={key} style={styles.item}>
-                    <View style={{flex:1,backgroundColor:"#fff"}}>
-                      <View style={{backgroundColor:"#3E87E3", paddingHorizontal: 15, paddingVertical: 5, borderRadius: 10, marginBottom: 10, shadowColor: "#000",
-                        shadowOffset: {
-                          width: 0,
-                          height: 2,
-                        },
-                        shadowOpacity: 100,
-                        shadowRadius: 3.84,
+    // View du GET AsyncStorage (tous les coupons sauvegardés)
+    let coupons = this.state.listCoupons.map((val, key) => {
+        // On parse la chaine de caractères en JSON
+        const obj = JSON.parse(val[1]);
 
-                        elevation: 5,}}>
-                        <Text style={styles.getItemText}>
-                        {val.code}</Text>
-                        <Text style={styles.getDescriptionText}>{val.description}</Text>
-                      </View>
-                    </View>
+        // TODO : Si on trouve une valeur quelconque...
+        if(val[1]){}
+        
+        // View d'une carte d'informations correspondant à un coupon
+        return  <View key={key} style={styles.item}>
+                  <View style={styles.cards}>
+                    <Text style={styles.getItemText}>
+                    {obj.code}</Text>
+                    <Text style={styles.getDescriptionText}>{obj.description}</Text>
+                    <Text style={styles.getDescriptionText}>ID scanné : {val[0]}</Text>
                   </View>
-      });
-
-      // Affichage du contenu lorsque tout est récupéré
-      return (
-        <View style={styles.container}>
-          <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.contentContainer}>
-
-            <View style={styles.getStartedContainer}>
-
-              
-              <Text style={styles.getTitleText}>Mes coupons</Text>
-              {movies}
-
-              <Text style={styles.getTitleText}>
-                <Ionicons
-                  name={'md-heart'}
-                  size={40}
-                  color={'#ED4956'}
-                /> Sauvegardés</Text>
-
-              <View style={{flex:1,backgroundColor:"#fff"}}>
-                <View style={{backgroundColor:"#3E87E3", paddingHorizontal: 15, paddingVertical: 5, borderRadius: 10, marginBottom: 10, shadowColor: "#000",
-                  shadowOffset: {
-                    width: 0,
-                    height: 2,
-                  },
-                  shadowOpacity: 100,
-                  shadowRadius: 3.84,
-
-                  elevation: 5,}}>
-
-                  <Text style={styles.getItemText}>{this.state.listCoupons.code}</Text>
-                  <Text style={styles.getDescriptionText}>{this.state.listCoupons.description}</Text>
                 </View>
-              </View>
-              
-              <TouchableOpacity style={styles.buttonStyle}>
-                <Text style={styles.buttonStyleText}>Actualiser</Text>
-              </TouchableOpacity>              
-            </View>
-          </ScrollView>
-        </View>
-      );
-    }
+    });
+
+    // Affichage du contenu lorsque tout est récupéré
+    return (
+      <View style={styles.container}>
+        <ScrollView refreshControl={
+          <RefreshControl
+            refreshing={this.state.refreshing}
+            onRefresh={this._onRefresh.bind(this)}
+          />
+        }
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}>
+
+          <View style={styles.getStartedContainer}>
+            <Text style={styles.getTitleText}>
+              <Ionicons name={'md-heart'} size={40} color={'#ED4956'}/> Sauvegardés
+            </Text>
+            {coupons}
+
+            <TouchableOpacity style={styles.buttonStyle} onPress={this.clearAllData}>
+              <Text style={styles.buttonStyleText}>Tout supprimer</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+    );
   }
 }
 
@@ -155,7 +119,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   cards: {
-    backgroundColor: 'black',
+    backgroundColor:"#3E87E3",
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 100,
+    shadowRadius: 3.84,
+    elevation: 5
   },
   welcomeImage: {
     width: 250,

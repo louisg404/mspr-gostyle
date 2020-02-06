@@ -6,11 +6,8 @@ import {
   Text,
   View,
   ActivityIndicator,
-  AsyncStorage,
-  TouchableOpacity,
-  Button,
   RefreshControl,
-  TextInput
+  AsyncStorage
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -22,14 +19,28 @@ class AdminScreen extends React.Component {
       isLoading: true,
       dataSource: null,
       refreshing: false,
-      email:"",
-      password:"",
+      admin: ''
     };
   }
 
   componentDidMount () {
     this.getData();
+    this.getAdmin();
   }
+
+  // Récupérer l'état administrateur
+  getAdmin = async () => {
+    try {
+      const adm = await AsyncStorage.getItem('admin');
+      console.log("Administrateur : ", adm);
+      // Attribution de l'état administrateur
+      this.setState({
+        admin: adm
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // Récupérer tous les coupons
   getData() {
@@ -75,24 +86,44 @@ class AdminScreen extends React.Component {
       });
 
       // Affichage du contenu lorsque tout est récupéré
-      return (
-        <View style={styles.container}>
-          <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.contentContainer}
-            refreshControl={
-              <RefreshControl
-                refreshing={this.state.refreshing}
-                onRefresh={this._onRefresh.bind(this)}
-              /> } >
+      if (this.state.admin === 'true') {
+        return (
+          <View style={styles.container}>
+            <ScrollView
+              style={styles.container}
+              contentContainerStyle={styles.contentContainer}
+              refreshControl={
+                <RefreshControl
+                  refreshing={this.state.refreshing}
+                  onRefresh={this._onRefresh.bind(this)}
+                /> } >
 
-            <View style={styles.getStartedContainer}>
-              <Text style={styles.getTitleText}>Tous les coupons</Text>
-              {movies}             
-            </View>
-          </ScrollView>
-        </View>
-      );
+              <View style={styles.getStartedContainer}>
+                <Text style={styles.getTitleText}>Tous les coupons</Text>
+                {movies}
+              </View>
+            </ScrollView>
+          </View>
+        );
+      }else{
+        return (
+          <View style={styles.container}>
+            <ScrollView
+              style={styles.container}
+              contentContainerStyle={styles.contentContainer}
+              refreshControl={
+                <RefreshControl
+                  refreshing={this.state.refreshing}
+                  onRefresh={this._onRefresh.bind(this)}
+                /> } >
+
+                <View style={styles.getStartedContainer}>
+                  <Text style={styles.getTitleText}>Accès refusé</Text>
+                </View>
+            </ScrollView>
+          </View>
+        );
+      }
     }
   }
 }

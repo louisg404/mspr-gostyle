@@ -8,8 +8,6 @@ import {
   AsyncStorage,
   TouchableOpacity,
   RefreshControl,
-  Modal,
-  TouchableHighlight
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-qr-code';
@@ -21,7 +19,6 @@ class HomeScreen extends React.Component {
     this.state = {
       listCoupons: [],
       refreshing: false,
-      modalVisible: false,
     };
   }
 
@@ -67,21 +64,24 @@ class HomeScreen extends React.Component {
     let coupons = this.state.listCoupons.map((val, key) => {
         // On parse la chaine de caractères en JSON
         const obj = JSON.parse(val[1]);
+        console.log(val[0]);
 
-        // TODO : Si on trouve une valeur quelconque...
-        if(val[1]){}
-        
-        // View d'une carte d'informations correspondant à un coupon
-        return  <View key={key} style={styles.item}>
-                  <View style={styles.cards}>
+        if(val[0] != 'admin'){
+          // View d'une carte d'informations correspondant à un coupon
+          return  <View key={key} style={styles.item}>
                     <Text style={styles.getItemText}>
-                    {obj.code}</Text>
-                    <Text style={styles.getDescriptionText}>{obj.description}</Text>
-                    <View style={styles.qrCode}>
-                      <QRCode size={100} bgColor={'#3E87E3'} fgColor={'white'} value={val[0]} />
+                      {key}</Text>
+                    <View style={styles.cards}>
+                      <Text style={styles.getItemText}>
+                      {obj.code}</Text>
+                      <Text style={styles.getDescriptionText}>{obj.description}</Text>
+                      <View style={styles.qrCode}>
+                        <QRCode size={100} bgColor={'#3E87E3'} fgColor={'white'} value={val[0]} />
+                      </View>
                     </View>
                   </View>
-                </View>
+        }
+        
     });
 
     // Affichage du contenu lorsque tout est récupéré

@@ -2,9 +2,6 @@ import React, { useState, useEffect, Component } from 'react';
 import { ExpoLinksView } from '@expo/samples';
 import { ScrollView, Text, View, StyleSheet, Button, Alert, TextInput, AsyncStorage, TouchableOpacity } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
-import { createAppContainer } from 'react-navigation';
-import { createStackNavigator } from 'react-navigation-stack';
-import * as WebBrowser from 'expo-web-browser';
 
 export default function LinksScreen() {
   const [hasPermission, setHasPermission] = useState(null);
@@ -45,6 +42,7 @@ export default function LinksScreen() {
     }
   }
 
+  // Permission de la caméra
   useEffect(() => {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
@@ -52,6 +50,7 @@ export default function LinksScreen() {
     })();
   }, []);
 
+  // Scan d'un QR Code
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
     Alert.alert(
@@ -68,19 +67,45 @@ export default function LinksScreen() {
   };
 
   // Fonction de connexion
-  connexion = async () => {
-    // TODO : API call pour se connecter
-    console.log("Connexion en cours...");
+  connexion = async (pseudo, password) => {
+    if(pseudo && password){
+      fetch(`http://192.168.43.242:8080/user/` + pseudo +`/`+ password)
+      .then ( (response) => response.json() )
+        .then( (responseJson) => {
+          console.log("oui : ", responseJson.admin);
+          if(responseJson !== false){
+            setConnected(connected ? false : true);
+            console.log("Connecté");
+            // Si administrateur
+            if(responseJson.admin === '1'){
+              AsyncStorage.setItem('admin', 'true');
+            }
+          }else{
+            console.log("Erreur !!! : ", responseJson);
+          }
+        })
+    }else{
+      console.log("Remplir tous les champs");
+    }
   }
 
   // Fonction d'inscription
   inscription = async (pseudo, password, firstname, lastname) => {
-    // TODO : API call pour s'inscrire
-    console.log("Inscription en cours...");
-    console.log(pseudo, password, firstname, lastname);
-
-    fetch(`http://192.168.43.242:8080/user/` + pseudo +`/`+ password +`/`+ firstname +`/`+ lastname);
-    setSubscribed(subscribed ? false : true);
+    if(pseudo && password && firstname && lastname){
+      fetch(`http://192.168.43.242:8080/user/` + pseudo +`/`+ password +`/`+ firstname +`/`+ lastname)
+      .then ( (response) => response.json() )
+        .then( (responseJson) => {
+          console.log(responseJson);
+          if(responseJson !== "false"){
+            setSubscribed(subscribed ? false : true);
+            console.log("Inscrit", responseJson);
+          }else{
+            console.log("Erreur !!! : ", responseJson);
+          }
+        })
+    }else{
+      console.log("Remplir tous les champs");
+    }
   }
 
   // Fonction déjà un compte
@@ -91,10 +116,23 @@ export default function LinksScreen() {
 
   // Fonction oublier de s'inscire
   oubliInscription = async () => {
-    console.log("Connexion en cours...");
+    console.log("Je souhaite m'inscrire finalement...");
     setSubscribed(subscribed ? false : true);
   }
 
+  // Déconnexion
+  deconnexion = async () => {
+    console.log("Déconnexion...");
+    setSubscribed(subscribed === false);
+    setConnected(connected === false);
+    setPseudo('');
+    setPassword('');
+    setFirstname('');
+    setLastname('');
+    await AsyncStorage.removeItem('admin');
+  }
+
+  // Vérification des permissions d'environnement
   if (hasPermission === null) {
     return <Text>Requesting for camera permission</Text>;
   }
@@ -105,19 +143,20 @@ export default function LinksScreen() {
   // Si l'utilisateur est connecté
   if (connected) {
     return(
-      <View
-      style={{
-        flex: 1,
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-      }}>
-        
-      <BarCodeScanner
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-        style={StyleSheet.absoluteFillObject}
-      />
-      {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
-    </View>
+      <View style={{flex: 1, flexDirection: 'column'}}>
+        <View style={{width: '100%', height: '80%', justifyContent: 'flex-end'}}>
+          <BarCodeScanner
+            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+            style={StyleSheet.absoluteFillObject}
+          />
+          {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
+        </View>
+        <View style={{width: '100%', height: '20%'}}>
+          <TouchableOpacity style={styles.loginBtn} onPress={() => deconnexion()}>
+            <Text style={{color: "white"}}>Déconnexion</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     )
   }
 
@@ -139,6 +178,7 @@ export default function LinksScreen() {
           <TextInput  
               style={styles.inputText}
               placeholder={'Mot de passe'}
+              secureTextEntry
               onChangeText={ (text) => setPassword(text) } />
           </View>
 
@@ -170,20 +210,20 @@ export default function LinksScreen() {
         </View>
         <View style={styles.inputView} >
           <TextInput  
-              style={styles.inputText}
-              placeholder="Pseudo" 
-              placeholderTextColor="black"/>
+            style={styles.inputText}
+            placeholder={'Pseudo'}
+            onChangeText={ (text) => setPseudo(text) } />
         </View>
 
         <View style={styles.inputView} >
-          <TextInput
+        <TextInput  
             style={styles.inputText}
-            placeholder="Mot de passe" 
-            placeholderTextColor="black"
-            secureTextEntry/>
+            placeholder={'Mot de passe'}
+            secureTextEntry
+            onChangeText={ (text) => setPassword(text) } />
         </View>
 
-        <TouchableOpacity style={styles.loginBtn} onPress={() => setConnected(connected ? false : true)}>
+        <TouchableOpacity style={styles.loginBtn} onPress={() => connexion(pseudo, password)}>
           <Text style={{color: "white"}}>Valider</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.loginBtn} onPress={() => oubliInscription()}>
